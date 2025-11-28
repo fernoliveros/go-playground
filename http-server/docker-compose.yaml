@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  ferttp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+    - "8080:8080"
+
+    container_name: go_web_wever
+
+    restart: always
+
+networks:
+  details:
+    name: ferttp
+    driver: bridge
