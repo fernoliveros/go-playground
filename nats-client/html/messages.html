@@ -1,5 +1,5 @@
 <ul>
-    {{range $index, $message := .Messages}}
-        <li>{{$message}}</li>
-    {{end}}
+  {{- range $index, $message := .Messages -}}
+  <li>{{$message}}</li>
+  {{- end -}}
 </ul>

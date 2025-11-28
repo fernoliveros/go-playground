@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"os"
 	"strings"
 
 	nats "github.com/nats-io/nats.go"
@@ -15,14 +14,9 @@ type Messages struct {
 }
 
 func main() {
-	if len(os.Args) != 4 {
-		fmt.Println("Required 3 args: sub chan, pub chan and http port")
-		os.Exit(1)
-	}
-
-	natSubChannel := os.Args[1]
-	natPubChannel := os.Args[2]
-	httpPort := os.Args[3]
+	natSubChannel := "groupchat"
+	natPubChannel := "groupchat"
+	httpPort := "8080"
 
 	nc, err := nats.Connect(nats.DefaultURL)
 	if err != nil {
@@ -82,10 +76,10 @@ func setupMessagesStream(nc *nats.Conn, natSubChannel string) {
 				if err != nil {
 					fmt.Printf("Error building messages template: %v", err.Error())
 				}
-
+				// messagesTemplate := "<div>Hello World!</div>"
 				ssePayload := fmt.Sprintf("event:message\ndata: %s\n\n", messagesTemplate)
 
-				fmt.Printf("About to write to the messages stream:\n %s", ssePayload)
+				// fmt.Printf("About to write to the messages stream:\n %s", ssePayload)
 				_, err = w.Write([]byte(ssePayload))
 				if err != nil {
 					fmt.Printf("Error writting data to the messages stream: %v", err.Error())
@@ -93,11 +87,6 @@ func setupMessagesStream(nc *nats.Conn, natSubChannel string) {
 				flusher.Flush()
 			}
 		}
-
-		// nc.Subscribe(natSubChannel, func(m *nats.Msg) {
-		// 	fmt.Printf(":: %s\n", string(m.Data))
-
-		// })
 	})
 }
 
@@ -125,12 +114,6 @@ func startHtmxServer(port string) {
 	http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
 }
 
-// func subscribeToNatChannel(nc *nats.Conn, natSubChannel string) {
-// 	nc.Subscribe(natSubChannel, func(m *nats.Msg) {
-// 		fmt.Printf(":: %s\n", string(m.Data))
-// 	})
-// }
-
 func registerPublishToNatChannelHandler(nc *nats.Conn, natPubChannel string) {
 	http.HandleFunc("/send", func(w http.ResponseWriter, r *http.Request) {
 		nc.Publish(natPubChannel, []byte("Hello there!"))
@@ -138,11 +121,11 @@ func registerPublishToNatChannelHandler(nc *nats.Conn, natPubChannel string) {
 
 }
 
-func buildMessagesTemplate(messagesForTmpl *Messages) ([]byte, error) {
+func buildMessagesTemplate(messagesForTmpl *Messages) (string, error) {
 	tmpl, err := template.ParseFiles("html/messages.html")
 	if err != nil {
 		fmt.Printf("Error parsing messages.html %v", err.Error())
-		return nil, fmt.Errorf("Error parsing messages.html %w", err)
+		return "", fmt.Errorf("error parsing messages.html %w", err)
 	}
 
 	var buf strings.Builder
@@ -150,8 +133,8 @@ func buildMessagesTemplate(messagesForTmpl *Messages) ([]byte, error) {
 	err = tmpl.Execute(&buf, messagesForTmpl)
 	if err != nil {
 		fmt.Printf("Error executing data struct into messages.html %v \n", err.Error())
-		return nil, fmt.Errorf("Error executing data struct into messages.html %w", err)
+		return "", fmt.Errorf("error executing data struct into messages.html %w", err)
 	}
-
-	return []byte(buf.String()), nil
+	
+	return buf.String(), nil
 }
