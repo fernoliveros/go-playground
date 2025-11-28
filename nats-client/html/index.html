@@ -16,11 +16,19 @@
   <body>
     <h1>GO + HTMX Demo</h1>
     <h2>{{.Message}}</h2>
-    <button hx-get="/send" hx-target="#otherEle">Send Message</button>
-    <div id="otherEle"></div>
+    <!-- <button hx-get="/send" hx-target="#otherEle">Send Message</button> -->
     <!-- Client-side HTML -->
     <div hx-ext="sse" sse-connect="/messages" sse-swap="message">
       <p>Waiting for server updates...</p>
     </div>
+    <form hx-post="/send" hx-target="#otherEle">
+      <input
+        id="msg"
+        type="text"
+        name="msg-input"
+        placeholder="Enter your message"
+      />
+    </form>
+    <div id="otherEle"></div>
   </body>
 </html>

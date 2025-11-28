@@ -24,15 +24,10 @@ func main() {
 		return
 	}
 
-	// subscribeToNatChannel(nc, natSubChannel)
 	registerPublishToNatChannelHandler(nc, natPubChannel)
 	setupMessagesStream(nc, natSubChannel)
 
-	// var wg sync.WaitGroup
-	// wg.Add(1)
 	startHtmxServer(httpPort)
-	// wg.Wait()
-
 }
 
 func setupMessagesStream(nc *nats.Conn, natSubChannel string) {
@@ -116,7 +111,29 @@ func startHtmxServer(port string) {
 
 func registerPublishToNatChannelHandler(nc *nats.Conn, natPubChannel string) {
 	http.HandleFunc("/send", func(w http.ResponseWriter, r *http.Request) {
-		nc.Publish(natPubChannel, []byte("Hello there!"))
+		if r.Method != "POST" {
+			http.Error(w, "we only allow posts", http.StatusMethodNotAllowed)
+		}
+
+		// Parse the form data
+    	err := r.ParseForm()
+    	if err != nil {
+    		http.Error(w, "Error parsing form", http.StatusBadRequest)
+    		return
+    	}
+
+    	// Access individual form values
+    	message := r.FormValue("msg-input") // Gets value for "username"
+
+    	// You can also iterate through all form values
+    	for key, values := range r.Form {
+    		fmt.Printf("Key: %s, Values: %v\n", key, values)
+    	}
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+		fmt.Fprintf(w, "Thanks for calling send endpoint!")
+
+		nc.Publish(natPubChannel, []byte(message))
 	})
 
 }
